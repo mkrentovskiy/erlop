@@ -1,0 +1,8 @@
+From: ErlOp <erlop@{{ domain }}>
+To: {{ mail_to }}
+Subject: Urgent notification
+
+{{ msg }}
+
+WBR,
+ErlOp

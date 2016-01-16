@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <title>ErlOp</title>
+    <link rel="stylesheet" href="/css/semantic.min.css" media="all">
+    <style type="text/css">
+      .r { text-align: right; }
+      .vat { vertical-align: top; }
+      .hide { display: none !important; }
+      .brick { margin-bottom: 5pt; }
+
+      .uname { color: #999; margin-bottom: 10px; }
+      .uptime { color: #399; margin-bottom: 15px; }
+      .dmesg { font-family: monospace; color: #666; margin-bottom: 5px; }
+
+      .tah { height: 33em !important; max-height: 33em !important; font-size: 17px !important; 
+             font-family: Courier, "Courier New", monospace; color: #fff !important; background: #111 !important; }
+      .pnodes_select { font-size: 18px !important; }
+      .vnodes_select { color: #666 !important; }
+
+      .console { font-size: 14px; font-family: Courier, "Courier New", monospace; width: 100%; height: 620px; background: #111; color: #eee; overflow: auto; }
+      .cmd { font-weight: bold; color: #f99; }
+
+      .log_list { font-size: 16px; font-family: monospace; width: 100%; height: 620px; background: #111; color: #eee;
+        overflow: auto; }
+      .log_line { margin-bottom: 15px; }
+      .log_date { margin-right: 10px; color: #dfd; }
+      .log_time { margin-right: 10px; color: #dff; }
+      .log_ip { margin-right: 10px; color: #ddf; }
+      .log_level { margin-right: 10px; color: #fcc; }
+      .log_service { margin-right: 10px; color: #ffc; }
+
+      .cif { width: 100%; height: 13em; background: #eee; }
+      .pcif { width: 100%; height: 13em; background: #cce; }
+      .crr { width: 18.5em; }
+    </style> 
+  </head>
+  <body>
+    <div id="_menu" class="ui menu">
+      <a id="_nodes" class="item">
+        <i class="server icon"></i> Nodes
+      </a>
+      <a id="_scenarios" class="item">
+        <i class="lab icon"></i> Scenarios
+      </a>
+      <div class="right menu">
+        <div class="item">
+          <i class="call icon"></i>
+          <div class="circular ui icon button dropme" id="peers">1</div>
+          <div class="ui flowing popup" id="peers_incoming">
+            <div class="ui buttons crr">
+              <div class="ui red button" id="call_reject"><i class="icon stop"></i> Reject</div>
+              <div class="or"></div>
+              <div class="ui positive button" id="call_answer"><i class="icon call"></i> Answer</div>
+            </div>
+          </div>
+        </div>
+        <div class="item">
+          <i class="wifi icon"></i>
+          <span class="ui label" id="statusbox">...</span>
+        </div>
+        <div class="item">
+          <div class="ui transparent icon input">
+            <form onsubmit="return $.app.add_pnode();">  
+              <div class="field">
+                <i class="add icon"></i>
+                <input id="add_pnode_ip" type="text" placeholder="IP Address">
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="ui page one column centered grid">
+      <div id="p_nodes" class="column _tabs">
+        <div id="pnodes"></div>
+      </div>
+
+      <div id="p_scenarios" class="column _tabs">
+        <div>
+          <form action="#" onsubmit="return false;">
+            <div class="ui form">
+              <div class="fields">
+                <div class="eight wide field">  
+                  <select id="scenarios_list" multiple class="form-control" size="20"></select>
+                </div>
+                <div class="six wide field">
+                  <select id="nodes_list" multiple class="form-control" size="15"></select>    
+                </div>
+                <div class="two wide field">
+                  <div>
+                    <button id="scenario_editor_btn" class="ui purple button" onclick="$('#scenario_editor').modal('show');">
+                      <i class="icon setting"></i> Editor
+                    </button>
+                  </div>
+                  <div class="ui divider"></div>
+                  <div class="brick">
+                    <div class="ui vertical buttons">
+                      <button id="apply_scenario_btn" class="ui primary button" onclick="$.app.apply_scenario()">
+                        <i class="icon send"></i> Apply
+                      </button>
+                      <button id="cancel_scenario_btn" class="ui orange disabled button" onclick="$.app.cancel_scenario()">
+                        <i class="icon refresh"></i> Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>          
+        </div>
+        <div id="consoles"></div>            
+      </div>
+    </div>
+
+    <div class="hide">
+      <div id="pnode" class="_template">
+        <div id="@_id@" class="pnode @_id@ ui raised segment">
+          <span class="ui ribbon label @state_class@">
+            @state@
+          </span>
+          <div class="ui corner label" onclick="$.app.drop_pnode(@id@);">
+            <i class="close icon"></i>
+          </div>
+          <div class="ui two column grid">
+            <div class="column">
+              <h2>
+                <span id="@_id@_hostname"></span> 
+                [@ip@]
+              </h2>
+              <div class="uname" id="@_id@_system"></div>  
+              <div class="uptime" id="@_id@_uptime"></div>
+              <div class="dmesg" id="@_id@_dmesg"></div>
+            </div>
+            <div class="column">
+              <span id="@_id@_vnodes_info"></span>
+              <table class="ui very basic table">
+                <tbody id="@_id@_vnodes">
+                </tbody>
+              </table>
+            </div>        
+          </div>
+        </div>
+      </div>
+
+      <table>
+        <tbody id="vnodes" class="_template">
+          <tr>
+            <td>@id@</td>
+            <td class="r"><span class="ui label">@state@</span></td>
+            <td class="r">@name@</td>
+            <td class="r">@ip@</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div id="sc_item_list" class="_template">
+        <option class="sc_@id@" value="@id@">@name@ [@rate@]</option>
+      </div>
+      <div id="sc_item_editor" class="_template">
+        <div class="item sc sc_@id@" rel="@id@">@name@</div>
+      </div>
+
+      <div id="sc_param" class="_template">
+        <div class="three column row sc_param_@num@">
+          <div class="eight wide column">
+            <span class="num floating ui circular blue label">@num@</span>
+            <input type="text" class="title" placeholder="Param title" value="@title@"/>
+          </div>
+          <div class="six wide column">
+            <div class="ui selection dropdown">
+              <div class="default text type_value">:type</div>
+              <i class="dropdown icon"></i>
+              <div class="menu">
+                <div class="item">String</div>
+                <div class="item">Number</div>
+                <!-- <div class="item">Data:Nodes</div>
+                <div class="item">Data:Templates</div> -->
+              </div>
+            </div>         
+          </div>
+          <div class="two wide column">
+            <div class="circular ui icon button dropme">
+              <i class="trash icon"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <select id="scenario_item" class="_template">
+        <option value="@id@">@title@</option>
+      </select>
+      <select id="pnode_scenario" class="_template">
+        <option value="@id@_0" class="@_id@ pnodes_select">@ip@</option>
+      </select>
+      <select id="vnode_scenario" class="_template">
+        <option value="@_pid@_@id@" class="@_id@_vnode vnodes_select">&nbsp;&nbsp;&nbsp;&nbsp;[@id@] @name@ (@ip@)</option>
+      </select>
+
+      <div id="_form_String" class="_template">
+        <div class="field">
+          <input class="p@num@" type="text" name="p@num@" placeholder="@title@" pattern=".*">
+        </div>
+      </div>
+      <div id="_form_Number" class="_template">
+        <div class="field">
+          <input class="p@num@" type="text" name="p@num@" size="8" placeholder="@title@" pattern="[0-9]*">
+        </div>
+      </div>
+      <div id="_form_Data" class="_template">
+        <div class="field">
+          <select name="p@num@" class="ui search dropdown p@num@">
+            <option value="">- @title@</option>
+          </select>
+        </div>
+      </div>
+      <select id="_form_Data_item" class="_template">
+        <option value="@key@">@value@</option>
+      </select>
+
+      <div id="host_console" class="_template">
+        <div id="panel_@id@" class="ui form segment">
+          <h2>@title@</h2>
+          <form id="params_@id@" class="brick" onsubmit="return false;">
+            <div class="ui three fields form">
+              %params_code%
+              <div class="field">
+                <button id="run_btn_@id@" class="ui red button exec">
+                  <i class="icon play"></i> Run
+                </button>
+              </div>
+            </div>
+          </form>
+          <div id="console_@id@" class="console"></div>
+        </div>
+      </div>
+
+      <div id="console_cmd" class="_template">
+        <span class="cmd">@v@</span><br/>
+      </div>
+
+      <div id="stream" class="_template">
+        <div id="video_@id@" class="four wide column streams">
+          <video class="pcif" autoplay></video>
+        </div>
+      </div>
+
+      <div id="confirm_drop_pnode">Are you sure?</div>
+      <div id="confirm_drop_scenario">Are you sure?</div>
+
+      <div id="n_call_title" class="_template">New call</div>
+      <div id="n_call_body" class="_template">Somebody call us!</div>
+      <div id="n_call_icon" class="_template">/i/notify/Comment.png</div>
+
+      <div id="n_done_title" class="_template">Scenarios</div>
+      <div id="n_done_body" class="_template">Scenario done execution for @node@</div>
+      <div id="n_done_icon" class="_template">/i/notify/Thumb_Up.png</div>
+    </div>
+
+    <div id="scenario_editor" class="ui modal">
+      <div class="content">
+        <form class="ui form" onsubmit="return false;">
+          <div class="two fields">
+            <div class="twelve wide field">
+              <input type="text" id="scenario_name" placeholder="Scenario name"/>
+            </div>
+            <div class="four wide field">
+              <span class="floating ui circular purple label" id="scenario_id">!</span>
+              <div class="ui selection dropdown">
+                <div class="default text" id="scenarios_editor_head">...</div>
+                <i class="dropdown icon"></i>
+                <div class="menu" id="scenarios_editor_list">
+                  <div class="item" onclick="$.app.se_new_scenario();">
+                    <i class="file icon"></i> New...
+                  </div>
+                </div>
+              </div> 
+            </div>
+          </div>
+          <div class="two fields">
+            <div class="field">
+              <span class="ui small green button" onclick="$.app.se_add_param();">
+                <i class="add circle icon"></i> Add param
+              </span>
+              <div class="ui divider"></div>
+              <div id="scenario_params" class="ui grid"></div>
+            </div>
+            <div class="field">
+              <textarea rows="30" id="scenario_commands" class="tah"></textarea>
+            </div>
+          </div>
+          <div class="ui field buttons">
+            <div class="ui red button" onclick="$.app.se_drop();">Drop</div>
+            <div class="or"></div>
+            <div class="ui button" onclick="$('#scenario_editor').modal('hide');">Close</div>
+            <div class="or"></div>
+            <div class="ui positive button" onclick="$.app.se_save();">Save</div>
+          </div>    
+        </form>
+      </div>
+    </div>
+
+    <div id="call_panel" class="ui modal">
+      <div class="ui negative hidden message" id="um_error">
+        <div class="circular ui pink button" id="um_recall"><i class="play icon"></i> Retry</div> 
+        We can't access to your video and audio. Please, allow it and let's try one more time.
+      </div>
+      <div class="ui grid" id="streams">
+        <div class="four wide column">
+          <video id="video_self" class="cif" autoplay muted></video>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/semantic.min.js"></script>
+
+    <script type="text/javascript" src="//www.google.com/jsapi?autoload={'modules':[{'name':'visualization',
+       'version':'1','packages':['corechart']}]}"></script>
+
+    <script type="text/javascript" src="/js/app.js"></script>
+  </body>
+</html>

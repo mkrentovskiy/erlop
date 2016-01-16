@@ -1,0 +1,8 @@
+From: ErlOp <erlop@{{ domain }}>
+To: {{ mail_to }}
+Subject: Upcoming report from {{ domain }}
+
+Hi!
+
+WBR,
+ErlOp
